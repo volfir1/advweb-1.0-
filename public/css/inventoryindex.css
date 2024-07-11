@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+/* Enhanced CSS */
+body {
+  overflow-y: auto;
+  background-color: #F5F5F5;
+  font-family: 'Montserrat', sans-serif;
+  z-index: -1;
+}
+
+#order-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 5vh;
+}
+
+.centered-header {
+  text-align: center;
+  background-color: #4CAF50;
+  padding: 20px;
+  margin: 0;
+  width: 100%;
+  height: 10vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  font-size: 2rem;
+  color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.centered-header:hover {
+  background-color: #45a049;
+}
+
+#sample_data {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+#sample_data th, #sample_data td {
+  border: none;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+#sample_data th {
+  background-color: #4CAF50;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+#sample_data tr:nth-child(even) {
+  background-color: #f8f8f8;
+}
+
+#sample_data tr:hover {
+  background-color: #f1f1f1;
+  transition: background-color 0.3s ease;
+}
+
+#sample_data .btn {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.card {
+  position: relative;
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
+  background-color: #fff;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  left: 5rem;
+}
+
+.card:hover {
+  box-shadow: 0 0 30px rgba(0,0,0,0.2);
+}
+
+.card-header {
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  font-size: 1.25rem;
+}
+
+.card-body {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-content {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.modal-header {
+  background-color: #4CAF50;
+  color: white;
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.btn-success, .btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.btn-success:hover, .btn-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #e0a800;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.btn {
+  transition: transform 0.1s ease-in-out;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}

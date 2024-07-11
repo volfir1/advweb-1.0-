@@ -1,0 +1,8 @@
+[
+    { "id": 1653026683, "f_": "Chocolate Cake", "quantity": 10, "category": "Cake", "unit_price": 20.00, "supplier": "Supplier A", "date_added": "2023-01-10", "last_updated": "2023-01-15" },
+    { "id": 1653026729, "product_name": "Vanilla Cake", "quantity": 15, "category": "Cake", "unit_price": 18.50, "supplier": "Supplier B", "date_added": "2023-01-12", "last_updated": "2023-01-16" },
+    { "id": 1653026738, "product_name": "Red Velvet Cake", "quantity": 8, "category": "Cake", "unit_price": 22.00, "supplier": "Supplier C", "date_added": "2023-01-11", "last_updated": "2023-01-14" },
+    { "id": 1653026806, "product_name": "Lemon Cake", "quantity": 12, "category": "Cake", "unit_price": 19.00, "supplier": "Supplier D", "date_added": "2023-01-13", "last_updated": "2023-01-17" },
+    { "id": 1653026843, "product_name": "Carrot Cake", "quantity": 7, "category": "Cake", "unit_price": 21.50, "supplier": "Supplier E", "date_added": "2023-01-14", "last_updated": "2023-01-18" }
+  ]
+  

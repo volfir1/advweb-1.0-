@@ -1,0 +1,13 @@
+#order-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.centered-header {
+  text-align: center;
+  background-color: aquamarine;
+  padding: 20px;
+  margin: 0;
+}
