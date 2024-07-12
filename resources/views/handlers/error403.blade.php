@@ -1,6 +1,3 @@
-
-
-
 @php
     $previousUrl = url()->previous();
 @endphp
@@ -11,11 +8,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error 403 - Access Denied</title>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/error403.css') }}">
 </head>
 <body>
-<div class="error-container">
+    <div class="error-container">
         <div class="error-content">
             <div class="text-content">
                 <header>
@@ -27,7 +24,7 @@
                     <p>It seems like you do not have access to this page.</p>
                 </main>
                 <footer>
-                         <button id="returnButton">RETURN</button>
+                    <button id="returnButton" data-previous-url="{{ $previousUrl }}">RETURN</button>
                 </footer>
             </div>
             <div class="illustration">
@@ -40,7 +37,14 @@
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/error403.js') }}"></script>
 
+    <!-- Popup Container -->
+    <div id="popupContainer" class="popup-container">
+        <div class="popup-content">
+            <p id="popupMessage"></p>
+        </div>
+    </div>
+
+    <script src="{{ asset('js/error403.js') }}"></script>
 </body>
 </html>

@@ -80,7 +80,7 @@ https://templatemo.com/tm-558-klassy-cafe
                                    
                                     <li><a href="{{ route('login') }}">Login</a></li>
                                    
-                                    <li><a href="{{ route('api.register') }}">Signup</a></li>
+                                    <li><a href="{{ route('signup') }}">Signup</a></li>
                                     </ul>
                             </li>
                             <!-- <li class=""><a rel="sponsored" href="https://templatemo.com" target="_blank">External URL</a></li> -->

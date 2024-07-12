@@ -1,4 +1,6 @@
-$(document).ready(function() {
+jQuery(document).ready(function($) {
+    var authenticateUrl = $('meta[name="authenticate-url"]').attr('content');
+
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -10,26 +12,32 @@ $(document).ready(function() {
         }
     });
 
+    function isEmpty(str) {
+        return !str || str.trim().length == 0;
+    }
+
     $("#loginForm").submit(function(event) {
         event.preventDefault();
-        $(".error-text").text(''); // Clear previous errors
-        var name = $("#Name").val();
-        var password = $("#Password").val();
+        $(".danger-text").text(''); // Clear previous errors
+
+        var name = $("#loginName").val();
+        var password = $("#loginPassword").val();
         var isValid = true;
 
-        if (name === "") {
+        if (isEmpty(name)) {
             $("#error-name").text('This field is required');
             isValid = false;
         }
 
-        if (password === "") {
+        if (isEmpty(password)) {
             $("#error-password").text('This field is required');
             isValid = false;
         }
 
         if (isValid) {
+            showLoadingOverlay();
             $.ajax({
-                url: "{{ route('api.authenticate') }}",
+                url: authenticateUrl,
                 type: "POST",
                 data: {
                     name: name,
@@ -37,20 +45,23 @@ $(document).ready(function() {
                 },
                 dataType: 'json',
                 success: function(response) {
+                    hideLoadingOverlay();
                     if (response.success) {
                         localStorage.setItem('auth_token', response.token);
-
-                        if (response.redirect) {
+                        showPopupMessage('success', 'Login successful. Redirecting...');
+                        setTimeout(function() {
                             window.location.href = response.redirect;
-                        } else {
-                            console.error('Redirect URL not provided in response');
-                            // Optionally, redirect to a default URL or display an error message
-                        }
+                        }, 2000);
+                    } else if (response.status === 'inactive') {
+                        showPopupMessage('warning', 'Your account is inactive. Please contact the administrator.');
+                    } else if (response.status === 'invalid') {
+                        showPopupMessage('error', 'Invalid credentials. Please try again.');
                     } else {
-                        showPopupMessage('error-popup', response.message || 'Login failed');
+                        showPopupMessage('error', 'An error occurred. Please try again.');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function(xhr) {
+                    hideLoadingOverlay();
                     var errorMessage = 'An error occurred. Please try again.';
                     if (xhr.responseJSON) {
                         if (xhr.responseJSON.message) {
@@ -59,20 +70,28 @@ $(document).ready(function() {
                             errorMessage = Object.values(xhr.responseJSON.errors).join('<br>');
                         }
                     }
-                    showPopupMessage('error-popup', errorMessage);
+                    showPopupMessage('error', errorMessage);
                 }
             });
         } else {
-            showPopupMessage('error-popup', 'Please fix the errors above');
+            showPopupMessage('error', 'Please fix the errors above');
         }
     });
 
-    function showPopupMessage(id, message) {
-        var popup = $('#' + id);
-        popup.text(message);
+    function showPopupMessage(type, message) {
+        var popup = $('#' + type + '-popup');
+        popup.find('span').text(message);
         popup.fadeIn();
         setTimeout(function() {
             popup.fadeOut();
-        }, 3000); // Show for 3 seconds
+        }, 3000);
+    }
+
+    function showLoadingOverlay() {
+        $('.loading-overlay').addClass('show');
+    }
+
+    function hideLoadingOverlay() {
+        $('.loading-overlay').removeClass('show');
     }
 });

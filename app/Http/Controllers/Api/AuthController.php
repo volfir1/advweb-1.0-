@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Customer;
 use Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -20,58 +22,65 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function registerUser(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:users',
-        'password' => 'required|string|min:3|max:12|confirmed',
-        'fname' => 'required|string|max:255',
-        'lname' => 'required|string|max:255',
-        'contact' => 'required|string|digits:11',
-        'address' => 'required|string|max:255',
-        'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-        $profileImagePath = null;
-        if ($request->hasFile('profile_image')) {
-            $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-            \Log::info('Profile image uploaded to: ' . $profileImagePath);
-        } else {
-            \Log::info('No profile image uploaded.');
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:users',
+                'email' => 'required|email|max:255|unique:users',
+                'password' => 'required|string|min:3|max:12|confirmed',
+                'fname' => 'required|string|max:255',
+                'lname' => 'required|string|max:255',
+                'contact' => 'required|string|digits:11',
+                'address' => 'required|string|max:255',
+                'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+        } catch (ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
         }
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'profile_image' => $profileImagePath, // Save the image path here
-            'role' => 'customer', // Default to customer for new registrations
-        ]);
+        DB::beginTransaction();
 
-        \Log::info('User created with ID: ' . $user->id . ' and profile image: ' . $user->profile_image);
+        try {
+            $profileImagePath = null;
+            if ($request->hasFile('profile_image')) {
+                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+                Log::info('Profile image uploaded to: ' . $profileImagePath);
+            } else {
+                Log::info('No profile image uploaded.');
+            }
 
-        $customer = Customer::create([
-            'user_id' => $user->id,
-            'fname' => $validated['fname'],
-            'lname' => $validated['lname'],
-            'contact' => $validated['contact'],
-            'address' => $validated['address']
-        ]);
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'profile_image' => $profileImagePath,
+                'role' => 'customer',
+            ]);
 
-        DB::commit();
+            Log::info('User created with ID: ' . $user->id . ' and profile image: ' . $user->profile_image);
 
-        return response()->json(['success' => true, 'message' => 'You have successfully registered']);
+            $customer = Customer::create([
+                'user_id' => $user->id,
+                'fname' => $validated['fname'],
+                'lname' => $validated['lname'],
+                'contact' => $validated['contact'],
+                'address' => $validated['address']
+            ]);
 
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Error during registration: ' . $e->getMessage());
+            DB::commit();
 
-        return response()->json(['success' => false, 'message' => 'Something went wrong, please try again', 'error' => $e->getMessage()], 500);
+            Log::info('User and Customer records created successfully');
+            return response()->json(['success' => true, 'message' => 'You have successfully registered']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error during registration: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json(['success' => false, 'message' => 'Something went wrong, please try again', 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
     /**
      * Authenticate user and return response with token on success.
@@ -81,39 +90,50 @@ class AuthController extends Controller
      */
     public function authenticate(Request $request)
     {
-        try {
-            $credentials = $request->validate([
-                'name' => ['required', 'string'],
-                'password' => ['required', 'string'],
-            ]);
-    
-            if (Auth::attempt($credentials)) {
-                $request->session()->regenerate();
-    
-                // Create a Sanctum token
-                $token = Auth::user()->createToken('auth_token')->plainTextToken;
-    
+        $credentials = $request->only('name', 'password');
+        $name = $request->input('name');
+
+        // Validate the request
+        $request->validate([
+            'name' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        // Determine if 'name' is an email or username
+        $loginType = filter_var($name, FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
+
+        // Attempt to log the user in with email or username
+        if (Auth::attempt([$loginType => $name, 'password' => $credentials['password']])) {
+            $user = Auth::user();
+
+            // Check if the user account is inactive
+            if (!$user->active_status) {
+                Auth::logout();
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Login successful',
-                    'redirect' => Auth::user()->role === 'admin' ? route('admin.index') : route('customer.menu.dashboard'),
-                    'token' => $token,
-                ]);
+                    'success' => false,
+                    'status' => 'inactive',
+                    'message' => 'Your account is inactive. Please contact support.'
+                ], 401);
             }
-    
+
+            // Successful login
+            $redirectUrl = $user->role === 'admin' ? route('admin.index') : route('customer.menu.dashboard');
+
             return response()->json([
-                'success' => false,
-                'message' => 'The provided credentials do not match our records.',
-            ], 401);
-        } catch (\Exception $e) {
-            \Log::error('Authentication error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred during authentication.',
-            ], 500);
+                'success' => true,
+                'role' => $user->role,
+                'redirect' => $redirectUrl,
+                'message' => 'Login successful.'
+            ]);
         }
+
+        // Invalid credentials
+        return response()->json([
+            'success' => false,
+            'status' => 'invalid',
+            'message' => 'Invalid credentials. Please try again.'
+        ], 401);
     }
-    
 
     /**
      * Log the user out (revoke the token).
@@ -125,14 +145,15 @@ class AuthController extends Controller
     {
         // Revoke the token that was used to authenticate the current request
         $request->user()->tokens()->delete();
-    
+        
         // Invalidate the session
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-    
-        return response()->json(['message' => 'Logged out successfully'], 200);
+        
+        // Redirect to the homepage
+        return response()->json(['message' => 'Logged out successfully', 'redirect' => route('home')], 200);
     }
-
+    
     /**
      * Get the authenticated user's profile information.
      *
@@ -150,8 +171,6 @@ class AuthController extends Controller
             // Add other profile information as needed
         ]);
     }
-    
-
 
     public function showRegistrationForm()
     {
@@ -162,6 +181,13 @@ class AuthController extends Controller
     {
         $email = $request->input('email');
         $exists = User::where('email', $email)->exists();
+        return response()->json(['exists' => $exists]);
+    }
+
+    public function checkUsername(Request $request)
+    {
+        $username = $request->input('name');
+        $exists = User::where('name', $username)->exists();
         return response()->json(['exists' => $exists]);
     }
 }
